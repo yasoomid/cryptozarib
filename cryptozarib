@@ -1,0 +1,48 @@
+import requests
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+
+# Function to handle the /start command
+def start(update, context):
+    update.message.reply_text("Welcome to the Crypto Price Bot! Type /price [symbol] to get the price of a digital currency. For example: /price BTC")
+
+# Function to handle the /price command
+def price(update, context):
+    # Get the cryptocurrency symbol from the command arguments
+    if len(context.args) == 0:
+        update.message.reply_text("Please provide a cryptocurrency symbol. For example: /price BTC")
+        return
+
+    symbol = context.args[0].upper()
+
+    # Fetch the current price of the cryptocurrency
+    response = requests.get(f"https://api.coingecko.com/api/v3/simple/price?ids={symbol}&vs_currencies=usd")
+    if response.status_code == 200:
+        data = response.json()
+        if symbol in data:
+            price = data[symbol]['usd']
+            update.message.reply_text(f"The current price of {symbol} is ${price}")
+        else:
+            update.message.reply_text("Invalid cryptocurrency symbol.")
+    else:
+        update.message.reply_text("Failed to fetch cryptocurrency data. Please try again later.")
+
+def main():
+    # Create an Updater object with your bot's token
+    updater = Updater("YOUR_BOT_TOKEN", use_context=True)
+
+    # Get the dispatcher to register handlers
+    dp = updater.dispatcher
+
+    # Register command handlers
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("price", price))
+
+    # Start the Bot
+    updater.start_polling()
+
+    # Run the bot until you press Ctrl-C
+    updater.idle()
+
+if __name__ == '__main__':
+          main()
+          
